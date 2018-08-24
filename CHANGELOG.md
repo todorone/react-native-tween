@@ -1,6 +1,8 @@
 # Changelog
 
 ## [Unreleased]
+
+## [0.2.0] - 2018-08-24
 - added `delay` property to `TweenInfo`
 - added `parallel` method to `Tweenable`
 - refactoring
