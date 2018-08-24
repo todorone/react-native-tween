@@ -1,10 +1,10 @@
 import React, { PureComponent } from 'react'
 import { Animated } from 'react-native'
 
-const translateProperties = [ // prettier-ignore
-  'perspective', 'rotate', 'rotateX', 'rotateY', 'rotateZ', 'scale', 'scaleX',
-  'scaleY', 'skewX', 'skewY', 'translateX', 'translateY',
-]
+const translateProperties = [
+  'perspective', 'rotate', 'rotateX', 'rotateY', 'rotateZ', 'scale',
+  'scaleX', 'scaleY', 'skewX', 'skewY', 'translateX', 'translateY',
+] // prettier-ignore
 
 export const SPRING = Animated.spring
 export const TIMING = Animated.timing
@@ -93,7 +93,7 @@ export default class Tweenable extends PureComponent<Props, State> {
     if (this.mounted) {
       this.setState({ animatedStyles })
     } else {
-      this.state.animatedStyles = animatedStyles
+      this.state.animatedStyles = animatedStyles // eslint-disable-line react/no-direct-mutation-state
     }
   }
 
@@ -122,7 +122,11 @@ export default class Tweenable extends PureComponent<Props, State> {
     }
   }
 
-  animate({ name = 'default', reversed = false, onComplete }: any = {}) {
+  animate({
+    name = 'default',
+    reversed = false,
+    onComplete,
+  }: { name?: string; reversed?: boolean; onComplete?: Function } = {}) {
     const tweenInfo = this.tweens.find(t => t.name === name)
 
     if (tweenInfo) {
@@ -133,7 +137,7 @@ export default class Tweenable extends PureComponent<Props, State> {
     }
   }
 
-  parallel({ names, onComplete }: { names: string[], onComplete?: Function }) {
+  parallel({ names, onComplete }: { names: string[]; onComplete?: Function }) {
     const tweenInfos = names.map(name => this.tweens.find(t => t.name === name))
     const tweens = tweenInfos.map(tweenInfo => this.createTween(tweenInfo, false))
 

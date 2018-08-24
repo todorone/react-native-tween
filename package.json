@@ -14,17 +14,36 @@
   "author": "Fedir Ushakov <1@todor.one>",
   "license": "MIT",
   "scripts": {
+    "lint": "eslint 'src/**/*.{js,ts,tsx}' --fix",
     "build": "tsc",
     "dev": "tsc --watch",
-    "prepublish": "yarn build"
+    "prepublish": "yarn lint && yarn build"
   },
   "peerDependencies": {
     "react-native": ">=0.45"
   },
   "devDependencies": {
-    "@types/react": "^16.4.11",
-    "@types/react-native": "^0.56.11",
-    "jest": "^23.5.0",
-    "typescript": "^3.0.1"
+    "@types/react": "16.4.11",
+    "@types/react-native": "^0.56.12",
+    "eslint": "5.4.0",
+    "eslint-config-prettier": "3.0.1",
+    "eslint-config-standard": "11.0.0",
+    "eslint-plugin-import": "2.14.0",
+    "eslint-plugin-node": "7.0.1",
+    "eslint-plugin-prettier": "2.6.2",
+    "eslint-plugin-promise": "4.0.0",
+    "eslint-plugin-react": "7.11.1",
+    "eslint-plugin-standard": "3.1.0",
+    "eslint-plugin-typescript": "nzakas/eslint-plugin-typescript",
+    "husky": "1.0.0-rc.13",
+    "jest": "23.5.0",
+    "prettier": "1.14.2",
+    "typescript": "3.0.1",
+    "typescript-eslint-parser": "18.0.0"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "yarn lint"
+    }
   }
 }

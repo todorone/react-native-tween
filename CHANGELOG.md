@@ -4,6 +4,7 @@
 - added `delay` property to `TweenInfo`
 - added `parallel` method to `Tweenable`
 - refactoring
+- added ESLint & Prettier linting & formatting
 
 ## [0.1.2] - 2018-08-24
 - Remove redundant `prop-types` peer dependency

@@ -23,9 +23,9 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var react_1 = __importStar(require("react"));
 var react_native_1 = require("react-native");
 var translateProperties = [
-    'perspective', 'rotate', 'rotateX', 'rotateY', 'rotateZ', 'scale', 'scaleX',
-    'scaleY', 'skewX', 'skewY', 'translateX', 'translateY',
-];
+    'perspective', 'rotate', 'rotateX', 'rotateY', 'rotateZ', 'scale',
+    'scaleX', 'scaleY', 'skewX', 'skewY', 'translateX', 'translateY',
+]; // prettier-ignore
 exports.SPRING = react_native_1.Animated.spring;
 exports.TIMING = react_native_1.Animated.timing;
 exports.DECAY = react_native_1.Animated.decay;
@@ -90,7 +90,7 @@ var Tweenable = /** @class */ (function (_super) {
             this.setState({ animatedStyles: animatedStyles });
         }
         else {
-            this.state.animatedStyles = animatedStyles;
+            this.state.animatedStyles = animatedStyles; // eslint-disable-line react/no-direct-mutation-state
         }
     };
     Tweenable.prototype.createTween = function (tweenInfo, reversed) {

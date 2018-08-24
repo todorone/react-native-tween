@@ -34,7 +34,11 @@ export default class Tweenable extends PureComponent<Props, State> {
     createTweenComplete: (tweenInfos: TweenInfo[], onComplete: Function) => ({ finished }: {
         finished: any;
     }) => void;
-    animate({ name, reversed, onComplete }?: any): void;
+    animate({ name, reversed, onComplete, }?: {
+        name?: string;
+        reversed?: boolean;
+        onComplete?: Function;
+    }): void;
     parallel({ names, onComplete }: {
         names: string[];
         onComplete?: Function;
