@@ -11,14 +11,15 @@ export const TIMING = Animated.timing
 export const DECAY = Animated.decay
 
 interface Tween {
-  name?: string
-  type?: typeof SPRING | typeof TIMING | typeof DECAY
   property: string
   from: number | string
   to: number | string
+  name?: string
+  type?: typeof SPRING | typeof TIMING | typeof DECAY
   value?
   interpolated?: boolean
   duration?: number
+  delay?: number
   autoStart?: boolean
   onComplete?: () => void
   onReversedComplete?: () => void
@@ -26,7 +27,7 @@ interface Tween {
 }
 
 interface Props {
-  tweens: Array<Tween>
+  tweens: Tween[]
   style?
 }
 
@@ -53,6 +54,7 @@ export default class Tweenable extends PureComponent<Props, State> {
       from: t.from,
       to: t.to,
       duration: t.duration,
+      delay: t.delay,
       autoStart: t.autoStart === undefined ? true : t.autoStart,
       onComplete: t.onComplete,
       onReversedComplete: t.onReversedComplete,
@@ -61,9 +63,13 @@ export default class Tweenable extends PureComponent<Props, State> {
       active: false,
     }))
 
+    const startingAnimations: string[] = []
+
     this.tweens.forEach(({ name, autoStart }: any) => {
-      if (autoStart) this.animate({ name })
+      if (autoStart) startingAnimations.push(name)
     })
+
+    startingAnimations.forEach(name => this.animate({ name }))
   }
 
   componentDidMount() {
@@ -101,31 +107,43 @@ export default class Tweenable extends PureComponent<Props, State> {
     name = 'default',
     reversed = false,
   }: { name?: string; reversed?: boolean } = {}) {
-    const animation = this.tweens.find(t => t.name === name)
+    const animationInfo = this.tweens.find(t => t.name === name)
 
-    if (animation) {
-      const { type, from, to, duration, value, onComplete, interpolated, onReversedComplete } = animation // prettier-ignore
+    if (animationInfo) {
+      const { type, from, to, duration, value, onComplete, interpolated,
+        delay, onReversedComplete } = animationInfo // prettier-ignore
 
-      animation.active = true
+      animationInfo.active = true
       this.calculateAnimatedStyles()
 
       value.setValue(reversed ? (interpolated ? 1 : to) : (interpolated ? 0 : from)) // prettier-ignore
 
       // @ts-ignore
-      type(value, {
+      const mainAnimation = type(value, {
         toValue: reversed ? (interpolated ? 0 : from) : (interpolated ? 1 : to), // prettier-ignore
         duration,
         useNativeDriver: true,
-      }).start(({ finished }) => {
+      })
+
+      const onAnimationComplete = ({ finished }) => {
         if (finished) {
-          animation.active = false
+          animationInfo.active = false
           if (reversed) {
             onReversedComplete && onReversedComplete()
           } else {
             onComplete && onComplete()
           }
         }
-      })
+      }
+
+      if (delay) {
+        Animated.sequence([
+          Animated.delay(delay),
+          mainAnimation
+        ]).start(onAnimationComplete)
+      } else {
+        mainAnimation.start(onAnimationComplete)
+      }
     } else {
       throw Error('Animation is not found')
     }

@@ -4,21 +4,22 @@ export declare const SPRING: typeof Animated.spring;
 export declare const TIMING: (value: Animated.Value | Animated.ValueXY, config: Animated.TimingAnimationConfig) => Animated.CompositeAnimation;
 export declare const DECAY: typeof Animated.decay;
 interface Tween {
-    name?: string;
-    type?: typeof SPRING | typeof TIMING | typeof DECAY;
     property: string;
     from: number | string;
     to: number | string;
+    name?: string;
+    type?: typeof SPRING | typeof TIMING | typeof DECAY;
     value?: any;
     interpolated?: boolean;
     duration?: number;
+    delay?: number;
     autoStart?: boolean;
     onComplete?: () => void;
     onReversedComplete?: () => void;
     active?: boolean;
 }
 interface Props {
-    tweens: Array<Tween>;
+    tweens: Tween[];
     style?: any;
 }
 interface State {

@@ -45,6 +45,7 @@ var Tweenable = /** @class */ (function (_super) {
             from: t.from,
             to: t.to,
             duration: t.duration,
+            delay: t.delay,
             autoStart: t.autoStart === undefined ? true : t.autoStart,
             onComplete: t.onComplete,
             onReversedComplete: t.onReversedComplete,
@@ -52,11 +53,13 @@ var Tweenable = /** @class */ (function (_super) {
             interpolated: typeof t.from === 'string',
             active: false,
         }); });
+        var startingAnimations = [];
         _this.tweens.forEach(function (_a) {
             var name = _a.name, autoStart = _a.autoStart;
             if (autoStart)
-                _this.animate({ name: name });
+                startingAnimations.push(name);
         });
+        startingAnimations.forEach(function (name) { return _this.animate({ name: name }); });
         return _this;
     }
     Tweenable.prototype.componentDidMount = function () {
@@ -87,21 +90,22 @@ var Tweenable = /** @class */ (function (_super) {
     };
     Tweenable.prototype.animate = function (_a) {
         var _b = _a === void 0 ? {} : _a, _c = _b.name, name = _c === void 0 ? 'default' : _c, _d = _b.reversed, reversed = _d === void 0 ? false : _d;
-        var animation = this.tweens.find(function (t) { return t.name === name; });
-        if (animation) {
-            var type = animation.type, from = animation.from, to = animation.to, duration = animation.duration, value = animation.value, onComplete_1 = animation.onComplete, interpolated = animation.interpolated, onReversedComplete_1 = animation.onReversedComplete; // prettier-ignore
-            animation.active = true;
+        var animationInfo = this.tweens.find(function (t) { return t.name === name; });
+        if (animationInfo) {
+            var type = animationInfo.type, from = animationInfo.from, to = animationInfo.to, duration = animationInfo.duration, value = animationInfo.value, onComplete_1 = animationInfo.onComplete, interpolated = animationInfo.interpolated, delay = animationInfo.delay, onReversedComplete_1 = animationInfo.onReversedComplete; // prettier-ignore
+            animationInfo.active = true;
             this.calculateAnimatedStyles();
             value.setValue(reversed ? (interpolated ? 1 : to) : (interpolated ? 0 : from)); // prettier-ignore
             // @ts-ignore
-            type(value, {
+            var mainAnimation = type(value, {
                 toValue: reversed ? (interpolated ? 0 : from) : (interpolated ? 1 : to),
                 duration: duration,
                 useNativeDriver: true,
-            }).start(function (_a) {
+            });
+            var onAnimationComplete = function (_a) {
                 var finished = _a.finished;
                 if (finished) {
-                    animation.active = false;
+                    animationInfo.active = false;
                     if (reversed) {
                         onReversedComplete_1 && onReversedComplete_1();
                     }
@@ -109,7 +113,16 @@ var Tweenable = /** @class */ (function (_super) {
                         onComplete_1 && onComplete_1();
                     }
                 }
-            });
+            };
+            if (delay) {
+                react_native_1.Animated.sequence([
+                    react_native_1.Animated.delay(delay),
+                    mainAnimation
+                ]).start(onAnimationComplete);
+            }
+            else {
+                mainAnimation.start(onAnimationComplete);
+            }
         }
         else {
             throw Error('Animation is not found');

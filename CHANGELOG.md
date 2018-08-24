@@ -1,6 +1,7 @@
 # Changelog
 
 ## [Unreleased]
+- added `delay` property to Tween
 
 ## [0.1.2] - 2018-08-24
 - Remove redundant `prop-types` peer dependency
