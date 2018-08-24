@@ -3,7 +3,7 @@ import { Animated } from 'react-native';
 export declare const SPRING: typeof Animated.spring;
 export declare const TIMING: (value: Animated.Value | Animated.ValueXY, config: Animated.TimingAnimationConfig) => Animated.CompositeAnimation;
 export declare const DECAY: typeof Animated.decay;
-interface Tween {
+interface TweenInfo {
     property: string;
     from: number | string;
     to: number | string;
@@ -14,12 +14,10 @@ interface Tween {
     duration?: number;
     delay?: number;
     autoStart?: boolean;
-    onComplete?: () => void;
-    onReversedComplete?: () => void;
     active?: boolean;
 }
 interface Props {
-    tweens: Tween[];
+    tweens: TweenInfo[];
     style?: any;
 }
 interface State {
@@ -27,14 +25,19 @@ interface State {
 }
 export default class Tweenable extends PureComponent<Props, State> {
     state: State;
-    tweens: Array<Tween>;
+    tweens: Array<TweenInfo>;
     mounted: boolean;
     constructor(props: any);
     componentDidMount(): void;
     calculateAnimatedStyles(): void;
-    animate({ name, reversed, }?: {
-        name?: string;
-        reversed?: boolean;
+    createTween(tweenInfo: TweenInfo, reversed: boolean): any;
+    createTweenComplete: (tweenInfos: TweenInfo[], onComplete: Function) => ({ finished }: {
+        finished: any;
+    }) => void;
+    animate({ name, reversed, onComplete }?: any): void;
+    parallel({ names, onComplete }: {
+        names: string[];
+        onComplete?: Function;
     }): void;
     render(): JSX.Element;
 }

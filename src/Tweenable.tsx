@@ -10,7 +10,7 @@ export const SPRING = Animated.spring
 export const TIMING = Animated.timing
 export const DECAY = Animated.decay
 
-interface Tween {
+interface TweenInfo {
   property: string
   from: number | string
   to: number | string
@@ -21,13 +21,11 @@ interface Tween {
   duration?: number
   delay?: number
   autoStart?: boolean
-  onComplete?: () => void
-  onReversedComplete?: () => void
   active?: boolean
 }
 
 interface Props {
-  tweens: Tween[]
+  tweens: TweenInfo[]
   style?
 }
 
@@ -38,7 +36,7 @@ interface State {
 export default class Tweenable extends PureComponent<Props, State> {
   state: State = { animatedStyles: [] }
 
-  tweens: Array<Tween> = []
+  tweens: Array<TweenInfo> = []
 
   mounted: boolean = false
 
@@ -56,20 +54,16 @@ export default class Tweenable extends PureComponent<Props, State> {
       duration: t.duration,
       delay: t.delay,
       autoStart: t.autoStart === undefined ? true : t.autoStart,
-      onComplete: t.onComplete,
-      onReversedComplete: t.onReversedComplete,
       value: new Animated.Value(typeof t.from === 'string' ? 0 : t.from),
       interpolated: typeof t.from === 'string',
       active: false,
     }))
 
-    const startingAnimations: string[] = []
+    const startingTweens: string[] = []
 
-    this.tweens.forEach(({ name, autoStart }: any) => {
-      if (autoStart) startingAnimations.push(name)
-    })
+    this.tweens.forEach(({ name, autoStart }) => autoStart && startingTweens.push(name))
 
-    startingAnimations.forEach(name => this.animate({ name }))
+    if (startingTweens.length > 0) this.parallel({ names: startingTweens })
   }
 
   componentDidMount() {
@@ -79,7 +73,7 @@ export default class Tweenable extends PureComponent<Props, State> {
   calculateAnimatedStyles() {
     const animatedStyles: Array<{}> = []
 
-    this.tweens.forEach((tween: Tween) => {
+    this.tweens.forEach((tween: TweenInfo) => {
       if (tween.active) {
         const styleValue = tween.interpolated
           ? tween.value.interpolate({
@@ -103,50 +97,47 @@ export default class Tweenable extends PureComponent<Props, State> {
     }
   }
 
-  animate({
-    name = 'default',
-    reversed = false,
-  }: { name?: string; reversed?: boolean } = {}) {
-    const animationInfo = this.tweens.find(t => t.name === name)
+  createTween(tweenInfo: TweenInfo, reversed: boolean) {
+    const { type, from, to, duration, value, delay, interpolated } = tweenInfo
 
-    if (animationInfo) {
-      const { type, from, to, duration, value, onComplete, interpolated,
-        delay, onReversedComplete } = animationInfo // prettier-ignore
+    tweenInfo.active = true
+    this.calculateAnimatedStyles()
 
-      animationInfo.active = true
-      this.calculateAnimatedStyles()
+    value.setValue(reversed ? (interpolated ? 1 : to) : (interpolated ? 0 : from)) // prettier-ignore
 
-      value.setValue(reversed ? (interpolated ? 1 : to) : (interpolated ? 0 : from)) // prettier-ignore
+    // @ts-ignore
+    const tween = type(value, {
+      toValue: reversed ? (interpolated ? 0 : from) : (interpolated ? 1 : to), // prettier-ignore
+      duration,
+      useNativeDriver: true,
+    })
 
-      // @ts-ignore
-      const mainAnimation = type(value, {
-        toValue: reversed ? (interpolated ? 0 : from) : (interpolated ? 1 : to), // prettier-ignore
-        duration,
-        useNativeDriver: true,
-      })
+    return delay ? Animated.sequence([Animated.delay(delay), tween]) : tween
+  }
 
-      const onAnimationComplete = ({ finished }) => {
-        if (finished) {
-          animationInfo.active = false
-          if (reversed) {
-            onReversedComplete && onReversedComplete()
-          } else {
-            onComplete && onComplete()
-          }
-        }
-      }
-
-      if (delay) {
-        Animated.sequence([
-          Animated.delay(delay),
-          mainAnimation
-        ]).start(onAnimationComplete)
-      } else {
-        mainAnimation.start(onAnimationComplete)
-      }
-    } else {
-      throw Error('Animation is not found')
+  createTweenComplete = (tweenInfos: TweenInfo[], onComplete: Function) => ({ finished }) => {
+    if (finished) {
+      tweenInfos.forEach(tweenInfo => (tweenInfo.active = false))
+      onComplete && onComplete()
     }
+  }
+
+  animate({ name = 'default', reversed = false, onComplete }: any = {}) {
+    const tweenInfo = this.tweens.find(t => t.name === name)
+
+    if (tweenInfo) {
+      const tween = this.createTween(tweenInfo, reversed)
+      tween.start(this.createTweenComplete([tweenInfo], onComplete))
+    } else {
+      throw Error('Tween is not found')
+    }
+  }
+
+  parallel({ names, onComplete }: { names: string[], onComplete?: Function }) {
+    const tweenInfos = names.map(name => this.tweens.find(t => t.name === name))
+    const tweens = tweenInfos.map(tweenInfo => this.createTween(tweenInfo, false))
+
+    Animated.parallel(tweens).start(this.createTweenComplete(tweenInfos, onComplete))
   }
 
   render() {

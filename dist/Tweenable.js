@@ -36,6 +36,13 @@ var Tweenable = /** @class */ (function (_super) {
         _this.state = { animatedStyles: [] };
         _this.tweens = [];
         _this.mounted = false;
+        _this.createTweenComplete = function (tweenInfos, onComplete) { return function (_a) {
+            var finished = _a.finished;
+            if (finished) {
+                tweenInfos.forEach(function (tweenInfo) { return (tweenInfo.active = false); });
+                onComplete && onComplete();
+            }
+        }; };
         // Animations are processed only before component mount, otherwise
         // adjusting animations props will lead to ruining current animations state
         _this.tweens = props.tweens.map(function (t) { return ({
@@ -47,19 +54,17 @@ var Tweenable = /** @class */ (function (_super) {
             duration: t.duration,
             delay: t.delay,
             autoStart: t.autoStart === undefined ? true : t.autoStart,
-            onComplete: t.onComplete,
-            onReversedComplete: t.onReversedComplete,
             value: new react_native_1.Animated.Value(typeof t.from === 'string' ? 0 : t.from),
             interpolated: typeof t.from === 'string',
             active: false,
         }); });
-        var startingAnimations = [];
+        var startingTweens = [];
         _this.tweens.forEach(function (_a) {
             var name = _a.name, autoStart = _a.autoStart;
-            if (autoStart)
-                startingAnimations.push(name);
+            return autoStart && startingTweens.push(name);
         });
-        startingAnimations.forEach(function (name) { return _this.animate({ name: name }); });
+        if (startingTweens.length > 0)
+            _this.parallel({ names: startingTweens });
         return _this;
     }
     Tweenable.prototype.componentDidMount = function () {
@@ -88,45 +93,36 @@ var Tweenable = /** @class */ (function (_super) {
             this.state.animatedStyles = animatedStyles;
         }
     };
+    Tweenable.prototype.createTween = function (tweenInfo, reversed) {
+        var type = tweenInfo.type, from = tweenInfo.from, to = tweenInfo.to, duration = tweenInfo.duration, value = tweenInfo.value, delay = tweenInfo.delay, interpolated = tweenInfo.interpolated;
+        tweenInfo.active = true;
+        this.calculateAnimatedStyles();
+        value.setValue(reversed ? (interpolated ? 1 : to) : (interpolated ? 0 : from)); // prettier-ignore
+        // @ts-ignore
+        var tween = type(value, {
+            toValue: reversed ? (interpolated ? 0 : from) : (interpolated ? 1 : to),
+            duration: duration,
+            useNativeDriver: true,
+        });
+        return delay ? react_native_1.Animated.sequence([react_native_1.Animated.delay(delay), tween]) : tween;
+    };
     Tweenable.prototype.animate = function (_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.name, name = _c === void 0 ? 'default' : _c, _d = _b.reversed, reversed = _d === void 0 ? false : _d;
-        var animationInfo = this.tweens.find(function (t) { return t.name === name; });
-        if (animationInfo) {
-            var type = animationInfo.type, from = animationInfo.from, to = animationInfo.to, duration = animationInfo.duration, value = animationInfo.value, onComplete_1 = animationInfo.onComplete, interpolated = animationInfo.interpolated, delay = animationInfo.delay, onReversedComplete_1 = animationInfo.onReversedComplete; // prettier-ignore
-            animationInfo.active = true;
-            this.calculateAnimatedStyles();
-            value.setValue(reversed ? (interpolated ? 1 : to) : (interpolated ? 0 : from)); // prettier-ignore
-            // @ts-ignore
-            var mainAnimation = type(value, {
-                toValue: reversed ? (interpolated ? 0 : from) : (interpolated ? 1 : to),
-                duration: duration,
-                useNativeDriver: true,
-            });
-            var onAnimationComplete = function (_a) {
-                var finished = _a.finished;
-                if (finished) {
-                    animationInfo.active = false;
-                    if (reversed) {
-                        onReversedComplete_1 && onReversedComplete_1();
-                    }
-                    else {
-                        onComplete_1 && onComplete_1();
-                    }
-                }
-            };
-            if (delay) {
-                react_native_1.Animated.sequence([
-                    react_native_1.Animated.delay(delay),
-                    mainAnimation
-                ]).start(onAnimationComplete);
-            }
-            else {
-                mainAnimation.start(onAnimationComplete);
-            }
+        var _b = _a === void 0 ? {} : _a, _c = _b.name, name = _c === void 0 ? 'default' : _c, _d = _b.reversed, reversed = _d === void 0 ? false : _d, onComplete = _b.onComplete;
+        var tweenInfo = this.tweens.find(function (t) { return t.name === name; });
+        if (tweenInfo) {
+            var tween = this.createTween(tweenInfo, reversed);
+            tween.start(this.createTweenComplete([tweenInfo], onComplete));
         }
         else {
-            throw Error('Animation is not found');
+            throw Error('Tween is not found');
         }
+    };
+    Tweenable.prototype.parallel = function (_a) {
+        var _this = this;
+        var names = _a.names, onComplete = _a.onComplete;
+        var tweenInfos = names.map(function (name) { return _this.tweens.find(function (t) { return t.name === name; }); });
+        var tweens = tweenInfos.map(function (tweenInfo) { return _this.createTween(tweenInfo, false); });
+        react_native_1.Animated.parallel(tweens).start(this.createTweenComplete(tweenInfos, onComplete));
     };
     Tweenable.prototype.render = function () {
         return (react_1.default.createElement(react_native_1.Animated.View, { style: [this.props.style].concat(this.state.animatedStyles) }, this.props.children));
