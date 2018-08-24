@@ -1,14 +1,30 @@
 {
-  "name": "react-native-tween",
-  "version": "0.2.0",
+  "name": "react-native-tweenable",
+  "version": "0.1.2",
   "description": "Declarative tween library for React Native",
-  "main": "index.js",
-  "repository": "https://github.com/todorone/react-native-tween",
+  "keywords": [
+    "react",
+    "native",
+    "animation",
+    "animated",
+    "tween"
+  ],
+  "main": "dist/index.js",
+  "repository": "https://github.com/todorone/react-native-tweenable",
   "author": "Fedir Ushakov <1@todor.one>",
   "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublish": "yarn build"
+  },
   "peerDependencies": {
-    "prop-types": "^15.0 || ^16.0",
-    "react": "^16.0",
     "react-native": ">=0.45"
+  },
+  "devDependencies": {
+    "@types/react": "^16.4.11",
+    "@types/react-native": "^0.56.11",
+    "jest": "^23.5.0",
+    "typescript": "^3.0.1"
   }
 }
