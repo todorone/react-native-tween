@@ -2,6 +2,9 @@
 
 ## [Unreleased]
 
+## [0.2.1] - 2018-08-25
+- added basic example
+
 ## [0.2.0] - 2018-08-24
 - added `delay` property to `TweenInfo`
 - added `parallel` method to `Tweenable`
